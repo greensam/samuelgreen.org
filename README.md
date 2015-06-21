@@ -1,3 +1,0 @@
-# samuelgreen.org
-
-Build files! 
