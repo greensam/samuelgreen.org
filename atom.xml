@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8" ?><feed xmlns="http://www.w3.org/2005/Atom"><title><![CDATA[Shape Shed]]></title><link href="http://feeds.feedburner.com/shapeshed" rel="self"></link><link href="http://shapeshed.com"></link><updated>2015-06-21T01:03:37.767Z</updated><id><![CDATA[http://shapeshed.com/]]></id><author><name><![CDATA[George Ornbo]]></name></author><generator uri="https://github.com/shapeshed/flim">Flim</generator><entry><title type="html"><![CDATA[Writing cross-platform Node.js]]></title><link href="http://shapeshed.com/writing-cross-platform-node"></link><updated>2014-03-25T11:53:07.000Z</updated><id>http://shapeshed.com/writing-cross-platform-node</id><content type="html"><![CDATA[<h2>Cross-platform if you want</h2>
+<p>Node.js is cross-platform meaning it works on Windows, OSX and Linux. A large number of the Node.js community write Node.js on OSX and then deploy to Linux servers. Because OSX and Linux are based on UNIX this tends to just work. Windows support is a first-class citizen in Node.js and if you learn to use Node.js in the right way you can make sure that you can welcome your Windows friends to your code party.</p>
+<h2>Paths</h2>
+<p>The biggest issue you will run into is paths. Node.js does a great job of taking care of most of this for you but if you build paths in the wrong way you&#39;ll run into problems on Windows.</p>
+<p>Consider you are doing some string concatantion to build a path for example.</p>
+<pre><code>var foo = &#39;foo&#39;;
+var bar = &#39;bar&#39;;
+var filePath = foo + &#39;/&#39; + bar + &#39;/&#39;;</code></pre>
+<p>Whilst forward slashes will work ok on Windows if you do string concatenation you miss out on the protection that the path module in Node.js gives you.</p>
+<p>The <a href="http://nodejs.org/api/path.html">path</a> module gives you all of the tools you need to handle cross-platform paths. For this example we need <code>path.join</code>.</p>
+<pre><code>var filePath = path.join(foo, bar);
+// &#39;foo/bar&#39; on OSX and Linux
+// &#39;foo\\bar&#39; on Windows</code></pre>
+<h2>Use <code>path.resolve</code> to traverse the filesystem</h2>
+<p>Using <code>path.resolve</code> lets you move around the file system but maintain cross platform compatibility. As per the documentation you can think of it as a series of <code>cd</code> commands that output a single path at the end.</p>
+<pre><code>path.resolve(&#39;../&#39;, &#39;/../&#39;, &#39;../&#39;)
+// &#39;/home&#39; on Linux
+// &#39;/Users&#39; on OSX
+// &#39;C:\\Users&#39; on Windows</code></pre>
+<h2>Use <code>path.normalize</code> to create reliable paths</h2>
+<p>If you find yourself doing things like this</p>
+<pre><code>var filePath = &#39;/home/george/../folder/code&#39;;</code></pre>
+<p>You should be using <code>path.normalize</code>. This will present you with the correct path on whatever platform you are using.</p>
+<pre><code>var filePath = path.normalize(&#39;/home/george/../folder/code&#39;); 
+// &#39;/home/folder/code&#39;</code></pre>
+<h2>Use <code>path.join</code> to join folder names</h2>
+<p>As we saw before with the string concatenation example kittens can die if you use string concatenation.</p>
+<p>If you need to join paths together use <code>path.join</code>. This will also normalize the result for you.</p>
+<pre><code>path.join(&#39;foo&#39;, &#39;..&#39;, &#39;bar&#39;, &#39;baz/foo&#39;);
+// &#39;bar/baz/foo&#39; on OSX and Linux
+// &#39;bar\\baz\\foo&#39; on Windows</code></pre>
+<h2>Scripts in package.json</h2>
+<p>Let&#39;s say you have the following executable script <code>npm-postinstall</code> in the bin folder of your project. </p>
+<pre><code>#!/usr/bin/env node
+console.log(&#39;node modules installed!&#39;);</code></pre>
+<p>If you define scripts to be run in your package.json you will find that Windows will choke if you rely on a Node.js shebang.</p>
+<pre><code>{
+  &quot;name&quot;: &quot;some-app&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;authors&quot;: [
+    &quot;George Ornbo &lt;george@shapeshed.com&gt;&quot;,
+  ],
+  &quot;scripts&quot;: {
+    &quot;postinstall&quot;: &quot;./bin/npm-postinstall&quot;
+  }
+}</code></pre>
+<p>The solution is to use the node executable.</p>
+<pre><code>{
+  &quot;name&quot;: &quot;some-app&quot;,
+  &quot;version&quot;: &quot;0.0.1&quot;,
+  &quot;authors&quot;: [
+    &quot;George Ornbo &lt;george@shapeshed.com&gt;&quot;,
+  ],
+  &quot;scripts&quot;: {
+    &quot;postinstall&quot;: &quot;node bin/npm-postinstall&quot;
+  }
+}</code></pre>
+<p>This works for all platforms rather than just OSX and Linux.</p>
+<h2>Join shell commands with a double ampersand instead of a semi-colon</h2>
+<p>If you are working with any form of executing command-line programs, and you like to execute more than one in a single go, you would probably do so like this (let&#39;s use the basic act of creating a folder and cd&#39;ing into it for brevity):</p>
+<pre><code>shell.exec(&#39;mkdir folder_name; cd folder_name&#39;);</code></pre>
+<p>Unfortunately, that does not work on Windows. Instead, use this:</p>
+<pre><code>shell.exec(&#39;mkdir folder_name &amp;&amp; cd folder_name&#39;);</code></pre>
+<h2>Cross Platform Newline Characters</h2>
+<p>We all know how troublesome newline characters are accross platforms. Some platforms use &#39;\n&#39;, others use &#39;\r&#39;, and the rest use both. If you are struggling to get the newline character to work in your log statements or strings on multiple platforms, then you might consider a solution that uses nasty regular expressions to match the correct newline character that you want. Usually, that would look like this: <code>/(?:\r\n|[r\n])/</code>. Yuck. Here&#39;s a better approach. The <code>OS</code> module has an <code>EOL</code> constant attached to it that when referred, will output the correct newline character for the operating system.</p>
+<p>  var os = require(&#39;os&#39;),
+      EOL = os.EOL;</p>
+<p>  console.log(&#39;This text will print&#39; + EOL + &#39;on three lines&#39; + EOL + &#39;no matter the OS&#39;);</p>
+<p>Thanks to <a href="http://declandewet.com">Declan de Wet</a> for the above two tips.</p>
+<h2>Temporary files</h2>
+<p>If you need to write files to a <code>tmp</code> folder use <code>os.tmpdir()</code> to ensure you write to the correct tmp file location for you platform. Thanks to <a href="https://github.com/alessioalex">alessioalex</a> for this tip. </p>
+<h2>Home directories</h2>
+<p>On *nix your home directory is process.env.HOME but in Windows the home directory is proces.env.HOMEPATH. You can smooth this out with</p>
+<pre><code>var homedir = (process.platform === &#39;win32&#39;) ? process.env.HOMEPATH : process.env.HOME;</code></pre>
+<p>The <a href="https://www.npmjs.org/package/module-smith">module-smith</a> module takes care of this for you so if you are interested in writing cross-platform modules consider using this. </p>
+<p>Thanks to <a href="https://github.com/indexzero">indexzero</a> for this tip. </p>
+<h2>Use the os module for more control</h2>
+<p>If you need even more control you can get the operating system platform and CPU architecture you are running on react accordingly with the <a href="http://nodejs.org/api/os.html">os module</a>.</p>
+<pre><code>var os = require(&#39;os&#39;);
+os.platform();
+// &#39;linux&#39; on Linux
+// &#39;win32&#39; on Windows 32-bit
+// &#39;win64&#39; on Windows 64-bit
+// &#39;darwin&#39; on OSX
+os.arch();
+// &#39;x86&#39; on 32-bit CPU architecture
+// &#39;x64&#39; on 64-bit CPU architecture</code></pre>
+<h2>Conclusion</h2>
+<p>One of the major strengths of Node.js is the ability to deploy your code on any platform and to work with almost any development platform. With a bit of knowledge you can make cross-platform compatibility happen out of the box and avoid having to write the &#39;make x compatible on x&#39; ticket.</p>
+<h2>References</h2>
+<ul>
+<li><a href="http://nodejs.org/api/path.html">Core path module</a></li>
+<li><a href="http://nodejs.org/api/os.html">Core os module</a></li>
+<li><a href="http://dailyjs.com/2012/05/24/windows-and-node-4/">Windows and Node: Writing Portable Code</a></li>
+<li><a href="https://www.npmjs.org/package/module-smith">Tips for Writing Portable Node.js Code</a></li>
+</ul>
+]]></content></entry><entry><title type="html"><![CDATA[Working with filesystems in Node.js]]></title><link href="http://shapeshed.com/working_with_filesystems_in_nodejs"></link><updated>2013-03-08T08:38:51.000Z</updated><id>http://shapeshed.com/working_with_filesystems_in_nodejs</id><content type="html"><![CDATA[<h2>Different ways to read a file</h2>
+<p>Node provides three different ways to read a file through the <code>fs</code> module.</p>
+<ul>
+<li>Synchronously</li>
+<li>Asynchronously</li>
+<li>As a stream</li>
+</ul>
+<p>To read a file synchronously you can do this</p>
+<pre><code>var data = fs.readFileSync(&#39;/path/to/some/file.txt&#39;,&#39;utf8&#39;);</code></pre>
+<p>To read a file asynchronously you can do this</p>
+<pre><code>fs.readFile(&#39;/path/to/some/file.txt&#39;, function (err, data) {
+  if (err) throw err;
+  console.log(data);
+});</code></pre>
+<p>Finally to read a file as a stream you can do this</p>
+<pre><code>var readStream = fs.createReadStream(&#39;/path/to/some/file.txt&#39;);</code></pre>
+<p>The difference in these are fundamental to how node works. The synchronous read will halt your program until the read has finished. The asynchronous read lets your program get on with other things and makes the data available via the callback. Reading a file as a stream makes the data available as soon as chunks of it are ready and lets you pipe it through other streams too. </p>
+<p>The <code>fs</code> module provides most things that you need. If you are a UNIX user the <a href="http://nodejs.org/api/fs.html">api</a> should be familiar to you.</p>
+<h2>Just enough but missing some things</h2>
+<p>The <code>fs</code> module provides a good toolkit for working with the filesystem but some operations are missing. If you do anything moderately complex with the <code>fs</code> module you will realise that you will either have to start getting into nested callback operations or look to third party modules to help you out. Thankfully there are some excellent (and small) third-party modules available.</p>
+<h2>Rimraf</h2>
+<p><a href="https://github.com/isaacs/rimraf">Rimraf</a> provides an <code>rm -rf</code> for node. If there are times when you want to recursively delete files this is a tool that does one thing well. </p>
+<pre><code>rimraf(&#39;/some/folder&#39;, function(err) {
+  if (err) { throw err; }
+  // done
+})</code></pre>
+<h2>mkdirp</h2>
+<p>If you are a UNIX user you are probably used to doing <code>mkdir -p /some/directory/path</code>. This will create all the directories in the path if they don&#39;t exist. If you are just using the <code>fs</code> module this is difficult to do but the <a href="https://github.com/substack/node-mkdirp">mkdirp</a> module comes to the rescue.</p>
+<pre><code>mkdirp(&#39;/some/directory/path&#39;, function (err) {
+  if (err) { throw err; }
+  // done
+});</code></pre>
+<h2>chmodr</h2>
+<p><a href="https://github.com/isaacs/chmodr">chomdr</a> does what you would expect <code>chmod -R</code> or recursively changing file or folder permissions. </p>
+<pre><code>chmodr(&quot;/some/folder&quot;, 0777, function (err) {
+  if (err) { throw err; }
+  // done
+})</code></pre>
+<h2>chown</h2>
+<p><a href="https://github.com/isaacs/chmodr">chown</a> recursively changes the ownership of files and folders like <code>chown -R</code> in UNIX. </p>
+<pre><code>chownr(&quot;/some/folder&quot;, 501, 20, function (err) {
+  if (err) { throw err; }
+  // done
+})</code></pre>
+<h2>ncp</h2>
+<p>Sooner or later you will want to do a recursive copy like <code>cp -R</code> in UNIX. This is tricky with the <code>fs</code> module but a module called <a href="https://github.com/AvianFlu/ncp">ncp</a> can help you achive that.</p>
+<pre><code>ncp(&#39;/dir/to/copy/from&#39;, &#39;/dir/to/copy/to&#39;, function (err) {
+  if (err) { throw err; }
+  // done
+});</code></pre>
+<h2>Other tools</h2>
+<p>There are wealth of other tools available. Check <a href="https://npmjs.org/browse/keyword/filesystem">npm</a> for <code>fs</code> module extensions and other goodies. Personally I favour modules that do one thing well but there are a number of modules that extend the <code>fs</code> module with more methods if that is your kind of thing.</p>
+<h2>Conclusion</h2>
+<p>Node&#39;s <code>fs</code> module gives you enough to work with filesystems and provides a single API to smooth out differences between operating systems. The third-party module ecosystem picks things up from there and plugs a few gaps to make node a very capable tool for working with filesystems. Personally I think it is great that more functionality isn&#39;t shoved into core modules. Experience of standard libraries like <a href="http://ruby-doc.org/stdlib-2.0/libdoc/net/http/rdoc/Net/HTTP.html">Net:HTTP</a> in Ruby suggest that core is where things go to rot and third-party libraries are often better anyway. </p>
+]]></content></entry><entry><title type="html"><![CDATA[Writing shell scripts more quickly in vi]]></title><link href="http://shapeshed.com/writing_shell_scripts_more_quickly_in_vi"></link><updated>2009-07-19T23:00:00.000Z</updated><id>http://shapeshed.com/writing_shell_scripts_more_quickly_in_vi</id><content type="html"><![CDATA[<h2>Shell scripts</h2>
+<p>If you are on a POSIX compliant machine (OSX or Linux) you can make use of Shell Scripts to do day-to-day donkey work. I use Shell Scripts for backups, cleaning out temporary folders, profiling and logging. Writing these scripts is pretty straightforward and if you are completely new to it I recommend getting a copy of <a href="http://oreilly.com/catalog/9780596005955/">Classic Shell Scripting</a>.</p>
+<p>Recently I came across a couple of shortcuts that have greatly reduced the time it takes to write a script in the vi editor. </p>
+<h2>Run shell commands from within vi</h2>
+<p>Using :! from within vi you can run a shell command. This is great as you don&#39;t need to exit vi to test your code. Let&#39;s say for example your script is called myscript.sh. You can run your script from within the vi editor by using. </p>
+<pre><code>:!myscript.sh</code></pre>
+<p>Furthermore you can make more changes in vi, save the file and then run the script again by using </p>
+<pre><code>:!!</code></pre>
+<p>This is a shortcut to the last command issued to the shell, allowing you to retest your shell script without even typing the filename. </p>
+<h2>The % variable</h2>
+<p>Within vi the % variable refers to the file that you are currently editing. So to run the script you are editing from within vi you can also use: </p>
+<p>  :%</p>
+]]></content></entry><entry><title type="html"><![CDATA[YQL supporting microformats]]></title><link href="http://shapeshed.com/yql_supporting_microformats"></link><updated>2009-01-15T00:00:00.000Z</updated><id>http://shapeshed.com/yql_supporting_microformats</id><content type="html"><![CDATA[<h2>Yahoo Query Language</h2>
+<p>If you haven&#39;t seen the <a href="http://developer.yahoo.com/yql/">Yahoo Query Language</a> you should definitely check it out. It has a <a href="http://developer.yahoo.com/yql/console/">handy console</a> where you can test queries and for anyone who writes SQL on a regular basis it should be pretty straight forward to construct a query and see the results that you get. It will even generate the REST query for you to drop into your scripts, outputting a choice of XML or JSON. You can look through the many APIs that Yahoo offer including Flickr, Upcoming.</p>
+<h2>A supra-API</h2>
+<p>Any developer who uses APIs on a regular basis knows that understanding and interrogating APIs is made more difficult by that fact that no standards exist for methods and syntax within APIs. YQL pulls together APIs to allow you to interrogate a variety of APIs through a standardised language. Yahoo call this YQL but for all intents and purposes it is SQL. So to query Flickr for photos of London that are geotagged you could use. </p>
+<pre><code>select * from flickr.photos.search where has_geo=&quot;true&quot; and text=&quot;london&quot; </code></pre>
+<p>This generates the REST query </p>
+<pre><code>%}http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20flickr.photos.search%20where%20has_geo%3D%22true%22%20and%20text%3D%22london%22&amp;format=xml</code></pre>
+<p>You can use this to get data however you like - JavaScript, CLI, PHP or whichever server-side language you prefer.</p>
+<h2>Adding semantic markup</h2>
+<p>Adding Microformats adds a rich layer of semantic information to this supra-API. YQL <a href="http://jonathantrevor.net/?p=40">supports joins</a> so already we can create views of data from multiple sites using this service. Welcome to &quot;View Source&quot; your way for data.</p>
+<h2>Why this is good</h2>
+<p>When I started working on the web six years ago I thought of the web as a giant fileserver that was grossly underused in terms of access to data. In recent years I&#39;ve realised that it is actually a giant network that can read, write and learn from other nodes. APIs have emerged as an initial way to share data between sites but for this to truly emerge, we need a standard means of sharing data and ultimately of granting permissions. The web community have worked through, and are still working through standards in client side technologies, but APIs are still at the beginning. YQL should be commended for using technologies that work very well on a local network to apply them to the internet in general. I for one can&#39;t wait to get hacking with Microformats in the YQL. More reason that you should <a href="http://microformats.org/">start using Microformats</a>.</p>
+]]></content></entry><entry><title type="html"><![CDATA[Wrapping up Inclusive New Media Design]]></title><link href="http://shapeshed.com/wrapping_up_inclusive_new_media_design"></link><updated>2008-05-19T23:00:00.000Z</updated><id>http://shapeshed.com/wrapping_up_inclusive_new_media_design</id><content type="html"><![CDATA[<p>Before a Q&amp;A each speaker had five minutes to give their opinion on how to make sites more accessible to Intellectually Disabled Users. Here is a list of the speakers and their main points. I&#39;ll be posting again about my learning from the study shortly.</p>
+<h2>The Speakers</h2>
+<ul>
+<li>Andy Minnion - <a href="http://www.rixcentre.org/">Rix Centre</a></li>
+<li>Antonia Hyde - <a href="http://www.unitedresponse.org.uk/">United Response</a></li>
+<li>Jonathan Hassell - <a href="http://www.bbc.co.uk/blogs/bbcinternet/jonathan_hassell/">BBC</a></li>
+<li>Simon Detheridge - <a href="http://www.widgit.com/">Widgit</a></li>
+<li>Ann McMeekin - <a href="http://www.pixeldiva.co.uk/">Pixeldiva</a></li>
+<li>Nick Weldin - <a href="http://www.paddingtonarts.org.uk/">Paddington Arts</a></li>
+</ul>
+<h3>Ann McMeekin</h3>
+<p>What should you prioritise? What would be the one thing to do? Generally there is no magic bullet. There is no testing tool that will do the trick. User testing is key particularly for this group of users. Tools can tell you about document structure and alt tags etc but for Intellectually Disabled users these kind of tools are not so good. User testing is key. Christian Heillemann&#39;s picture of a toilet shows that you really need to user test every site that you build. You should not just follow guidelines but understand, test and interpret them. Anne showed <a href="http://www.wait-till-i.com">Christian Heilmann&#39;s</a> example of an accessible toilet found in London. It is totally unusable.</p>
+<p><img src="http://farm1.static.flickr.com/169/412734816_af9de40b48.jpg" alt="A disabled toilet showing accessibility guidelines done the wrong way"> </p>
+<h3>Nick Weldin</h3>
+<p>It is very difficult to say what the one thing you should do to improve accessibility for intellectually disabled users as it is a very complicated subject. The internet has become a very big thing that means different things to different people. Who are you designing for? What is their concept of accessibility? The commissioners of the site vary as to the level of accessibility they want to achieve. Target is moving a lot. The target in terms of the people is equally as wide, from someone who struggles a bit to read to someone who won&#39;t sit down in front of a computer screen. In my experience it is not that they can use the website themselves but rather that someone can sit with them and work through things together. For that reason a hook where a facilitator can make it happen is important. Keyboard control over being able to use the website. Websites are often way beyond the level of ability of intellectually disabled users.</p>
+<h3>Simon Detheridge</h3>
+<p>How symbols can enhance accessibility. Research shows that symbols improvs the readabiliity of a website. Speech and symbols give the best results, followed by speech followed by symbols. 70% of special schools use widget reference symbols. Many people come through education using symbols, then don&#39;t have access to resources. When symbol content is provided they use it. Symbol world gets 35,000 unique hits a month. Labour Party manifesto was symbolised and subseqently crashed Symbol World&#39;s servers. Demand is there. Symbols also help foreign language speakers. Good for struggling readers and people learning to read. English is also simplified by people using symbols. You can just using simples for navigation - <a href="http://www.isaac-online.org/en/home.shtml">example</a>. You can also symbolise summaries of the page - <a href="http://www.isaac-online.org/en/home.shtml">example</a>. You can also create full symbol pages. Dynamic content is also possible (Widgit produce technologies to help this happen). Widgit has produced symbol sites themselves and they say if you add symbol support you need to make sure that the symbolised alternative is acccessible from the front page. You need to limit the number of options (more than 8 is a problem, ideally 5.) Layout of symbol content is important. People who read symbols tend not to see punctuation so keep one sentence on a line. Sentences running onto each other is confusing. Too many symbols on a page is a problem. Small menus and split content up into lots of small blocks. </p>
+<h3>Antonia Hyde - United Response</h3>
+<p>Big is beautiful. Icons, pictures, symbols. Five tips. Born out of things happening in Web 2.0. Loads of problems with sites and accessibility for people with learning disabilities. After user testing found that rrows have to be bigger than thought for people with learning disabilities. Come out of your comfort zone if users say so. Anywhere where there is interaction it need to be obvious, and to allow keyboard control. Big browse buttons are god. Debate on whether to make text larger or smaller. In my experience people don&#39;t know. Many are not using assistive technology. The example of Brian, an ID user. It takes him a while to get there - we want him to be quicker, but he is happy to get there at his own pace. Controls need to be bigger. Access - many options to log in sign up. Often lost in links in the top right hand corner. Actions need to be bigger. Sign post them. Help options. They are often too small. Make them big and make them noticeable. When on help pages headings that are big and instructive really help. Give things space within their context or they will get missed. </p>
+<h3>Jonathan Hassell</h3>
+<p>Three themes: Inclusion, Personalisation, Beyond Inclusion. Inclusion - How to make things inclusive. Try multimedia - starter for ten. Same information in different media. Video works for everyone. Don&#39;t forget Web 2.0. Not about people consuming content but they should also be able to contribute. Video is better than words. Many people with learning disabilities love television. Personalisation - example that you can change the BBC homepage. You can turn off a huge amount of the homepage. The BBC has loads of stuff but I want to turn much of it off. I don&#39;t care about history etc. Personalisation is useful in saying if we can&#39;t get everything on there is there a way of enabling the user or the supporter to personalise the site. Beyond inclusion. Create something special. Inclusive design is a good idea but there are numerous places where it doesn&#39;t work. Most things make websites good for ID users but poor for other users. There can be many contradictions. People with ID love images, blind or partially sited people don&#39;t. Symbol world is designed for people with learning disabilities. Do not ghettoise. Content with learning difficulties would want. Produce for them. E.g. Symbol world. Symbol news.</p>
+]]></content></entry><entry><title type="html"><![CDATA[Working with scans in Photoshop]]></title><link href="http://shapeshed.com/working_with_scans_in_photoshop"></link><updated>2007-12-06T00:00:00.000Z</updated><id>http://shapeshed.com/working_with_scans_in_photoshop</id><content type="html"><![CDATA[<h2>Scanned images</h2>
+<p>Every now and again you might want to scan photographs or postcards using your scanner. You could scan them one by one and crop them out in Photoshop but Photoshop will actually do it for you. Let have a look at the results of a typical scan.</p>
+<p><img src="http://shapeshed.com/images/articles/photos.jpg" alt="Result of a scan"> </p>
+<p>The images are off centre and cropping is going to be tricky. Instead I can use one of Photoshop&#39;s Automate Functions. Go up to File &gt; Automate &gt; Crop and Straighten Photos. Automatically it will crop the images and straighten them for you.</p>
+<p><img src="http://shapeshed.com/images/articles/cropped_photos.jpg" alt="Results of automated function"> </p>
+<h2>Useful for sketches</h2>
+<p>This technique is also useful for sketches. Often I like to use pen and paper to come up with ideas. Sometimes I want to get that sketch into Photoshop or Illustrator. </p>
+<p><img src="http://shapeshed.com/images/articles/icon_ideas.jpg" alt="Icon ideas"> </p>
+<p>Using the Automate function I can ask Photoshop to split things out for me. Then I can use the sketch as a guide in either Photoshop or Illustrator.</p>
+<p><img src="http://shapeshed.com/images/articles/cropped_ideas.jpg" alt="Cropped icons"> </p>
+<p>It is not always 100% perfect but I usually find it is worth a try before using a more time consuming technique.</p>
+]]></content></entry><entry><title type="html"><![CDATA[Writing good XHTML and CSS Part 2]]></title><link href="http://shapeshed.com/writing_good_xhtml_and_css_part_2"></link><updated>2006-10-06T23:00:00.000Z</updated><id>http://shapeshed.com/writing_good_xhtml_and_css_part_2</id><content type="html"><![CDATA[<p>In <a href="http://shapeshed.com/writing_good_xhtml_and_css_part_1/">Part 1</a> we went over the production environment you will need to write Professional XHTML and CSS. This included software and hardware as some excellent extensions you can get for the <a href="http://www.mozilla.com/firefox/">Firefox browser</a>. Part two looks at good practices for writing maintainable and lasting code. </p>
+<h2>Format code cleanly</h2>
+<p>Whether you are coding on the fly or from a layered Photoshop file it is important to write your code in a manner that is maintainable and readable by others. It is unlikely you will remember what you did in six months time so lay your code out cleanly. </p>
+<p>Indent your code from the left edge to allow the reader to follow the flow of a document. In this example of a simple XHTML page indenting tags allows you to follow the page elements.</p>
+<pre><code>&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD XHTML 1.0 Strict//EN&quot; &quot;http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd&quot;&gt;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot; xml:lang=&quot;en&quot; lang=&quot;en&quot;&gt;
+  &lt;head&gt;
+    &lt;title&gt;Example XHTML Page&lt;/title&gt;
+    &lt;style type=&quot;text/css&quot; media=&quot;screen&quot;&gt;
+      @import &quot;/css/screen.css&quot;;
+    &lt;/style&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div id=&quot;id-for-css&quot;&gt;
+      &lt;h1&gt;A great big title&lt;/h1&gt;
+      &lt;img src=&quot;http://shapeshed.com/images/some_image.png&quot; title=&quot;An image&quot; alt=&quot;An image&quot; width=&quot;100&quot; height=&quot;200&quot; /&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+<p>The same is true for CSS files. Laying out your files in a consistent manner will help maintain a website in future.  </p>
+<pre><code>body { 
+  font: 76%/150% &quot;Lucida Grande&quot;, 
+  &quot;Lucida Sans&quot;, &quot;Trebuchet MS&quot;, Tahoma, Verdana, sans-serif color: #333366; 
+  background: url(http://shapeshed.com/images/backgrounds/gradient.png) repeat-x; 
+}</code></pre>
+<h2>Comments are good</h2>
+<p>Indenting code will help you read a document but it won&#39;t help you understand why certain things are there. That&#39;s where comments come in. </p>
+<p>It is easy to comment code as you go and it will save you time in the long run: </p>
+<pre><code>/* CSS Comment - I can use this to highlight sections of the CSS file or explain sections of code */ 
+
+&lt;!-- An XTHML comment - I can use this to denote sections or reasons why I have coded things in a certain way --&gt;</code></pre>
+<h2>Use DOCTYPES</h2>
+<p>DOCTYPES declare what time of document the web page is. If you don&#39;t declare one then your code won&#39;t validate and is likely to be flakey on some platforms. Browsers have two modes - standards and quirks mode. They decide on which one to use by the DOCTYPE. If you don&#39;t declare one then quirks mode will be used rendering your lovely compliant code using methods for non-compliant code. Declare a DOCTYPE and your code will be rendered in the correct mode. You can choose to use HTML or XHTML but make sure you choose the right DOCTYPE from <a href="http://www.w3.org/QA/2002/04/valid-dtd-list.html">here</a>.</p>
+<h2>Test, test, test</h2>
+<p>As you code it is important to test as often as possible. Check your pages in the browsers and platforms that we defined in <a href="http://shapeshed.com/writing_good_xhtml_and_css_part_1/">Part 1</a>. You will soon realise that different browsers interpret things very differently. This can be painful to start with but after a while you will learn the inconsistencies and code defensively. </p>
+<p>Divide you design up into chunks and test at regular intervals. This might be the header, main body and footer for example.</p>
+<p>Validate your code at the <a href="http://validator.w3.org/">W3C Markup Validator</a> and the <a href="http://jigsaw.w3.org/css-validator/">W3C CSS Validator</a>. Not only will this help to bulletproof your code, you will learn how to tighten up your code through errors and warnings. </p>
+<p>If you are coding to a fixed width I recommend taking screenshots and checking widths and layouts in Photoshop. It is often quite difficult to see by eye where layouts have gone wrong. By using Rulers (Mac: Apple + R, Windows: CTRL + R) and the <a href="http://shapeshed.com/photoshop_101_the_marquee_tool/">Marquee tool</a> in Photoshop you can make sure you are pixel perfect.</p>
+<p><img src="http://shapeshed.com/images/articles/checking_layouts.png" alt="Checking design layouts in photoshop"></p>
+<h2>As you learn get to know the specs</h2>
+<p>OK this is the vaguely scarey bit. XHTML and CSS both have Specifications as defined by the W3C. Getting to know these and associated documents is a great way to improve your code. Yes these documents are lengthy and quite dull but if you want to learn XHTML and CSS properly you will need familiarise yourself with the following documents: </p>
+<ul>
+<li><a href="http://www.w3.org/TR/xhtml1/">XHTML 1.0</a></li>
+<li><a href="http://www.w3.org/TR/REC-CSS2/">CSS 2.0</a></li>
+<li><a href="http://www.w3.org/TR/WAI-WEBCONTENT/">Web Content and Accessiblity Guidelines 1.0</a></li>
+</ul>
+<p>They don&#39;t cost anything so why not buy yourself something nice with the money you have saved?</p>
+<h2>Overcoming browser hell</h2>
+<p>Although things are getting much better is a fact of life that at some point you will pull your hair out over a problem. Luckily for you there is a support group who has been through this hell before. You may well find the answer to your problem by simply typing it into Google. If that does not solve your problem then there are multiple email lists for CSS in particluar. <a href="http://css-discuss.incutio.com/">CSS-Discuss</a> is particularly good. Otherwise asking friends and colleagues is a good way to solve problems. If none of those work you are quite at liberty to throw your computer out of the window.</p>
+]]></content></entry><entry><title type="html"><![CDATA[Writing good XHTML and CSS Part 1]]></title><link href="http://shapeshed.com/writing_good_xhtml_and_css_part_1"></link><updated>2006-09-25T23:00:00.000Z</updated><id>http://shapeshed.com/writing_good_xhtml_and_css_part_1</id><content type="html"><![CDATA[<h2>Understand your environment</h2>
+<p>Before you even write a line of code it is important to understand the environment you are operating in. Websites can be viewed on a multitude of different platforms. One reason to code professionally is so that websites will appear consistently on as many platforms as possible. It may come as a surprise but about 40% of web users don’t access the web through Internet Explorer. As such it is important to become familiar with the fact that you need to test and build for a multitude of browsers.</p>
+<h2>A basic setup</h2>
+<p><img src="http://shapeshed.com/images/articles/bbedit.png" alt="Screenshot from BBEdit"></p>
+<p>In order to begin coding there are a number of software packages you will need. Some are free and others are worth the investment. Although you can code in Notepad or TextEdit I strongly recommend using an application like <a href="http://www.barebones.com/products/bbedit/">BBEdit</a> (Mac) or <a href="http://www.adobe.com/products/homesite/">Homesite</a> (Windows). These programs will allow you to write code more quickly and will allow you to read it clearly once you have written it. If you don’t have the budget for these programs then I recommend <a href="http://www.pspad.com/">PSPad</a> (Windows) or <a href="http://www.barebones.com/products/textwrangler/">Textwrangler</a> (Mac)- both free. All of these programs allow you to have multiple pages open at one time and will allow you to manage your coding effectively. For images you will need a some graphics software. <a href="http://www.adobe.com/products/photoshop/">Photoshop</a> is the industry standard and is difficult to beat. A free alternative is the <a href="http://www.gimp.org/">GIMP</a>. </p>
+<h2>Browser mayhem</h2>
+<p>I mentioned before that there are many browsers on the web. In order to write first-class code you will need to get hold of these browsers. If you have budget I suggest that you also have a Windows machine and an Apple Macintosh on which to test your code. You can get most browsers for free and the very nice people at <a href="http://www.evolt.org/">Evolt</a> keep a <a href="http://browsers.evolt.org/">browser archive</a> where you can download older browsers. For most browsers it is simply a case of installing old versions in custom folders. My personal preference is too keep all browsers in one folder called &#39;Browsers&#39;. I keep a shortcut on my desktop so I can quickly call up code in any browser. </p>
+<p>As a minimum I suggest you install and become familiar with the following browsers:</p>
+<p><strong>Windows</strong></p>
+<ul>
+<li>Internet Explorer 5, 5.5, 6, 7</li>
+<li>Firefox 1.0, 1.5</li>
+<li>Netscape 7, 8</li>
+<li>Opera 7,8,9</li>
+</ul>
+<p><strong>Mac</strong> </p>
+<ul>
+<li>Internet Explorer 5.2</li>
+<li>Camino 1</li>
+<li>Safari 1, 2</li>
+<li>Opera 8, 9</li>
+</ul>
+<p>Keep an eye on the <a href="http://www.w3schools.com/browsers/browsers_stats.asp">browser statistics</a> published at <a href="http://www.w3schools.com">W3 schools</a>. If a new browser pops up and you haven’t heard of it install it and make sure you test on it. You will learn that browsers interpret code very differently so be prepared to love and loathe certain browsers!</p>
+<h2>Help yourself</h2>
+<p>There are some great free tools to help you write excellent code. The first is <a href="http://www.mozilla.com/firefox/">Firefox</a> which I mentioned in the list of browsers. Firefox interprets code almost flawlessly and I would recommend using this browser as your default for coding. Furthermore there are some great plug-ins that will help you in the future. <a href="https://addons.mozilla.org/firefox/60/">The Web Developer toolbar</a> is a must and contains just about everything you will need to stress test your code. I also recommend that get hold of <a href="https://addons.mozilla.org/firefox/402/">Fangs</a>. This will help you understand how screen readers and search engine robots will see your code.</p>
+<p>If you do not want to use Firefox there is a similar plugin for Internet Explorer - <a href="http://www.visionaustralia.org.au/ais/toolbar/">The Web Accessibility Toolbar</a>. </p>
+<p>Now you have a development and testing environment we will move onto writing code in <a href="http://shapeshed.com/writing_good_xhtml_and_css_part_2/">Part 2</a> of How to Write Good XHTML and CSS</p>
+]]></content></entry><entry><title type="html"><![CDATA[Windows Vista User Interface Design]]></title><link href="http://shapeshed.com/windows_vista_user_interface_design"></link><updated>2006-07-17T23:00:00.000Z</updated><id>http://shapeshed.com/windows_vista_user_interface_design</id><content type="html"><![CDATA[<p><img src="http://shapeshed.com/images/articles/expwinvista_highlight_aero.png" alt="Vista Aero"></p>
+<p>Microsoft are announcing a new UID called &#39;Aero&#39;. This is perhaps not the best choice of name in the UK as Aero is a well loved chocolate bar famous for its bubbles.   </p>
+<p>The design looks good from <a href="http://www.microsoft.com/windowsvista/experiences/aero.mspx">the screenshots</a> and it is pleasing that Microsoft are addressing an area where they were / are underperforming. It is pretty clear that Microsoft are attacking Apple head on for the user experience and graphical interface. </p>
+<p><img src="http://shapeshed.com/images/articles/AeroMint.jpg" alt="Aero Mint"></p>
+<p>I&#39;ve <a href="http://www.shapeshed.com/journal/mac_motifs_on_windows_messenger_live_design/">mentioned before</a> that I think some of the design from Vista is very close to Apple motifs. The screenshots for Vista are no different and I wonder whether there are any Apple lawyers rubbing their hands? Look at the Aero thumbnail for example. Where have we seen that before? An Apple wallpaper perhaps? Then there is the menu system. To me it seems like it has been neatly lifted from <a href="http://www.apple.com/macosx/overview/aquauserinterface.html">Apple&#39;s Aqua design style</a>. It will be interesting to see whether there is any response from Apple.</p>
+<p>Windows is the most widely used operating system so it is great that the browser and the UID are getting an upgrade. I just wonder whether Microsoft have mimicked their closest rival a little too closely for comfort?</p>
+<p><img src="http://shapeshed.com/images/articles/vista_aqua.jpg" alt="Vista Aqua"></p>
+]]></content></entry></feed>
