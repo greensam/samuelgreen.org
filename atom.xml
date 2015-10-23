@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="utf-8" ?><feed xmlns="http://www.w3.org/2005/Atom"><title><![CDATA[Shape Shed]]></title><link href="http://feeds.feedburner.com/shapeshed" rel="self"></link><link href="http://shapeshed.com"></link><updated>2015-10-19T03:53:11.043Z</updated><id><![CDATA[http://shapeshed.com/]]></id><author><name><![CDATA[George Ornbo]]></name></author><generator uri="https://github.com/shapeshed/flim">Flim</generator><entry><title type="html"><![CDATA[CS50 Section 2015]]></title><link href="http://shapeshed.com/cs50_2015"></link><updated>2015-09-21T04:00:00.000Z</updated><id>http://shapeshed.com/cs50_2015</id><content type="html"><![CDATA[<h3>Section Week 6</h3>
+<?xml version="1.0" encoding="utf-8" ?><feed xmlns="http://www.w3.org/2005/Atom"><title><![CDATA[Shape Shed]]></title><link href="http://feeds.feedburner.com/shapeshed" rel="self"></link><link href="http://shapeshed.com"></link><updated>2015-10-23T01:41:55.187Z</updated><id><![CDATA[http://shapeshed.com/]]></id><author><name><![CDATA[George Ornbo]]></name></author><generator uri="https://github.com/shapeshed/flim">Flim</generator><entry><title type="html"><![CDATA[CS50 Section 2015]]></title><link href="http://shapeshed.com/cs50_2015"></link><updated>2015-09-21T04:00:00.000Z</updated><id>http://shapeshed.com/cs50_2015</id><content type="html"><![CDATA[<h3>Section Week 6</h3>
 <p>Hashables, Tries, Stacks, Queues, woo!</p>
 <p>Slides <a href="/assets/cs50/week6.pdf">PDF</a> <a href="/assets/cs50/week6.pptx">PPTX</a></p>
+<p>Code <a href="/assets/cs50/section6.zip">.ZIP</a></p>
 <h3>Quiz 0 Review</h3>
 <p>Practice Quiz <a href="/assets/cs50/practicequiz0.pdf">PDF</a></p>
 <p>Practice Quiz Solutions <a href="/assets/cs50/practicequiz0_sols.pdf">PDF</a></p>
