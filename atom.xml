@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8" ?><feed xmlns="http://www.w3.org/2005/Atom"><title><![CDATA[Shape Shed]]></title><link href="http://feeds.feedburner.com/shapeshed" rel="self"></link><link href="http://shapeshed.com"></link><updated>2015-11-16T19:19:14.237Z</updated><id><![CDATA[http://shapeshed.com/]]></id><author><name><![CDATA[George Ornbo]]></name></author><generator uri="https://github.com/shapeshed/flim">Flim</generator><entry><title type="html"><![CDATA[CS50 Section 2015]]></title><link href="http://shapeshed.com/cs50_2015"></link><updated>2015-09-21T04:00:00.000Z</updated><id>http://shapeshed.com/cs50_2015</id><content type="html"><![CDATA[<h3>Section Week 10</h3>
-<p>Slides <a href="/assets/cs50/week10.pptx">PPTX</a> <a href="/assets/CS50/week10.pdf">PDF</a></p>
+<?xml version="1.0" encoding="utf-8" ?><feed xmlns="http://www.w3.org/2005/Atom"><title><![CDATA[Shape Shed]]></title><link href="http://feeds.feedburner.com/shapeshed" rel="self"></link><link href="http://shapeshed.com"></link><updated>2015-11-28T01:22:00.438Z</updated><id><![CDATA[http://shapeshed.com/]]></id><author><name><![CDATA[George Ornbo]]></name></author><generator uri="https://github.com/shapeshed/flim">Flim</generator><entry><title type="html"><![CDATA[CS50 Section 2015]]></title><link href="http://shapeshed.com/cs50_2015"></link><updated>2015-09-21T04:00:00.000Z</updated><id>http://shapeshed.com/cs50_2015</id><content type="html"><![CDATA[<h3>Section Week 10</h3>
+<p>Slides <a href="/assets/cs50/week10.pptx">PPTX</a> <a href="/assets/cs50/week10.pdf">PDF</a></p>
 <p>I&#39;ll post code solutions at some point after section.</p>
 <h3>Section Week 9</h3>
-<p>Slides <a href="/assets/cs50/week9.pptx">PPTX</a> <a href="/assets/CS50/week8.pdf">PDF</a></p>
+<p>Slides <a href="/assets/cs50/week9.pptx">PPTX</a> <a href="/assets/cs50/week8.pdf">PDF</a></p>
 <p>Code <a href="/assets/cs50/section9.zip">ZIP</a></p>
 <p>The code above also contains solutions to the exercises. You may not be able to run the Ajax example in the IDE because it uses an example API that does not respond in HTTPS. </p>
 <h3>Section Week 8</h3>
